@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class ProductController {
 
     @Autowired
@@ -24,7 +24,13 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<List<ProductDto>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+        try {
+            List<ProductDto> products = productService.getAllProducts();
+            return ResponseEntity.ok(products);
+        } catch (Exception e) {
+            // 배포 환경에서 서비스 레이어 에러 시 404가 나거나 로깅 누락되는 것 방지
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @GetMapping("/search")

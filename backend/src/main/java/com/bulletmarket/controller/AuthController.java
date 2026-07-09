@@ -17,7 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class AuthController {
 
     @Autowired
@@ -39,7 +39,7 @@ public class AuthController {
 
         User user = new User();
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword()); // Plain text storage for mock/before simplicity
+        user.setPassword(request.getPassword()); // Plain text storage for simplicity
         user.setName(request.getName());
         userRepository.save(user);
 
