@@ -16,7 +16,7 @@ spring:
 
   # 2️⃣ 하드코딩된 Fallback(기본값)을 전부 제거하고 오직 환경 변수로만 매핑
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?prepareThreshold=0}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?preparedStatementCacheQueriesPerConnection=0}
     username: ${SPRING_DATASOURCE_USERNAME:${DB_USER}}
     password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD}}
     driver-class-name: org.postgresql.Driver
