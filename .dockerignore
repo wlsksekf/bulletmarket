@@ -1,0 +1,22 @@
+# ==============================================================================
+# BulletMarket Unified Root Docker Ignore Configuration
+# ==============================================================================
+
+# Git & System Files
+.git/
+.gitignore
+.github/
+.vscode/
+*.log
+
+# Backend Exclusions
+backend/target/
+backend/.idea/
+backend/*.iml
+
+# Frontend Exclusions
+frontend/node_modules/
+frontend/dist/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*

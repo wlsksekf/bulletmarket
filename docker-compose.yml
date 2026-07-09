@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  backend:
+    image: ${DOCKER_USERNAME:-bulletmarket}/${BACKEND_IMAGE:-backend}:latest
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: bulletmarket-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+    networks:
+      - global-network
+    restart: always
+
+  frontend:
+    image: ${DOCKER_USERNAME:-bulletmarket}/${FRONTEND_IMAGE:-frontend}:latest
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+    container_name: bulletmarket-frontend
+    depends_on:
+      - backend
+    networks:
+      - global-network
+    restart: always
+
+networks:
+  global-network:
+    external: true
