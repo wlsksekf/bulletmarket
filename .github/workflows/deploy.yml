@@ -17,14 +17,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 🔹 [추가] 그래들 빌드를 위한 Java 21 런타임 세팅
+      # 🔹 그래들 빌드를 위한 Java 21 런타임 세팅
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
-      # 🔹 [추가] 그래들 래퍼 실행 권한 부여 및 스프링 부트 jar 빌드
+      # 🔹 그래들 래퍼 실행 권한 부여 및 스프링 부트 jar 빌드
       - name: Grant execute permission for gradlew
         run: chmod +x ./backend/gradlew
 
@@ -108,4 +108,10 @@ jobs:
             
             # 4. 방금 빌드된 최신 래핑 이미지 풀링 및 컨테이너 무중단 롤링 가동
             docker compose pull
+            docker compose up -d
+            
+            # 5. 🔹 [추가] 대장 Nginx 가상 네트워크망 동기화 자동 패치
+            echo "Restarting Global Proxy Nginx to sync new container IPs..."
+            cd /home/${{ secrets.SERVER_USER }}/global-proxy
+            docker compose down
             docker compose up -d
