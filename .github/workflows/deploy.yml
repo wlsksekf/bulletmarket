@@ -90,7 +90,7 @@ jobs:
           source: "nginx/bulletmarket.conf"
           target: "/home/${{ secrets.SERVER_USER }}/global-proxy"
 
-      # 3. 서버 접속 후 컨테이너 가동 및 대장 프록시 동기화
+      # 3. 서버 접속 후 컨테이너 가동 및 메인 프록시 동기화
       - name: Deploy to Oracle VM
         uses: appleboy/ssh-action@v1.2.0
         with:
