@@ -368,9 +368,9 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, apiBaseUrl, onClose }
             width: '100%',
             padding: '0.7rem 1rem',
             borderRadius: '10px',
-            border: '1px solid rgba(255,255,255,0.18)',
-            background: 'rgba(255,255,255,0.07)',
-            color: '#f1f5f9',
+            border: '1px solid var(--border)',
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary, #333)',
             fontSize: '0.9rem',
             fontWeight: 500,
             cursor: isGoogleLoading ? 'not-allowed' : 'pointer',
@@ -378,8 +378,8 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, apiBaseUrl, onClose }
             fontFamily: 'inherit',
             opacity: isGoogleLoading ? 0.7 : 1,
           }}
-          onMouseEnter={e => !isGoogleLoading && ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.13)')}
-          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)')}
+          onMouseEnter={e => !isGoogleLoading && ((e.currentTarget as HTMLElement).style.background = 'var(--bg-hover, #f1f5f9)')}
+          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'var(--bg-card, transparent)')}
         >
           {isGoogleLoading ? (
             <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
