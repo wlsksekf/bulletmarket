@@ -28,6 +28,9 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, apiBaseUrl, onClose }
     setIsGoogleLoading(true);
     setError(null);
     try {
+      if (!supabase) {
+        throw new Error('Supabase 설정이 누락되어 구글 로그인을 사용할 수 없습니다. 환경 변수를 확인해 주세요.');
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

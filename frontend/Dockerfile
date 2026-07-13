@@ -14,6 +14,14 @@ RUN npm install
 # 소스 코드 복사 (빌드 컨텍스트가 루트이므로 frontend 폴더 내용을 복사)
 COPY frontend/ .
 
+# Vite 빌드 시 환경 변수 주입을 위한 ARG 선언
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+
+# 해당 ARG를 ENV로 매핑하여 빌드 컨텍스트에서 접근 가능하게 설정
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+
 # 프로덕션 빌드 실행 (Vite 기본 빌드 결과물은 dist 폴더에 생성됨)
 RUN npm run build
 
