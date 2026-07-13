@@ -4,6 +4,10 @@ server:
     include-stacktrace: always
     include-message: always
 
+supabase:
+  jwt:
+    secret: ${SUPABASE_JWT_SECRET}
+
 spring:
   # 1️⃣ 환경 변수 파일(.env) 파싱 주입 설정 (절대 비밀번호 하드코딩 금지)
   config:
