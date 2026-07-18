@@ -24,7 +24,7 @@ hs_err_pid*
 replay_pid*
 
 # Sensitive Environment Configurations
-.env
+.env*
 
 .gradle/
 **/build/
