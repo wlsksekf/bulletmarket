@@ -51,7 +51,7 @@ public class ProductService {
             // 카테고리 정보 및 상품 명을 활용하여 자바 서비스 계층에서 동적으로 합성(Synthetic) 처리합니다.
             // 이를 통해 DB 테이블 용량은 최소화하면서 프론트엔드 UI/UX 뷰와의 완벽한 호환성을 지킵니다.
             String categoryName = product.getCategory() != null ? product.getCategory().getName() : "all";
-            String imageUrl = "/images/" + categoryName.toLowerCase() + ".jpg";
+            String imageUrl = "https://loremflickr.com/400/400/" + categoryName.toLowerCase() + "?lock=" + product.getId();
             String description = "Premium quality " + product.getName() + " under category " + categoryName + ". Designed for everyday use.";
 
             return new ProductDto(
@@ -86,7 +86,7 @@ public class ProductService {
                     .orElse(0.0);
             
             String categoryName = product.getCategory() != null ? product.getCategory().getName() : "all";
-            String imageUrl = "/images/" + categoryName.toLowerCase() + ".jpg";
+            String imageUrl = "https://loremflickr.com/400/400/" + categoryName.toLowerCase() + "?lock=" + product.getId();
             String description = "Premium quality " + product.getName() + " under category " + categoryName + ". Designed for everyday use.";
 
             return new ProductDto(
@@ -128,7 +128,7 @@ public class ProductService {
                 .orElse(0.0);
         
         String categoryName = product.getCategory() != null ? product.getCategory().getName() : "all";
-        String imageUrl = "/images/" + categoryName.toLowerCase() + ".jpg";
+        String imageUrl = "https://loremflickr.com/400/400/" + categoryName.toLowerCase() + "?lock=" + product.getId();
         String description = "Premium quality " + product.getName() + " under category " + categoryName + ". Designed for everyday use.";
 
         return new ProductDto(

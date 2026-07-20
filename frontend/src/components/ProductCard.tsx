@@ -48,8 +48,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           loading="eager" 
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            const cat = product.name.toLowerCase().includes('electronics') ? 'electronics' : 'all';
-            target.src = `/images/${cat}.jpg`;
+            target.src = `https://picsum.photos/seed/${product.id}/400/400`;
           }}
         />
       </div>

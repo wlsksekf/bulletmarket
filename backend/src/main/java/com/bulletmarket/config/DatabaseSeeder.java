@@ -35,29 +35,19 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        boolean needsReSeed = false;
-        if (categoryRepository.count() == 0) {
-            needsReSeed = true;
-        } else {
-            // 데이터베이스의 첫 상품명을 확인하여 한글이 없으면 영문 시드로 판단, 전체 재초기화 마이그레이션 수행
-            needsReSeed = productRepository.findAll().stream().findFirst()
-                    .map(p -> !p.getName().matches(".*[ㄱ-ㅎㅏ-ㅣ가-힣].*"))
-                    .orElse(true);
-        }
+        boolean needsReSeed = true; // Force reseed to apply new categories and prices
 
-        if (needsReSeed) {
             System.out.println("⚙️ 데이터베이스의 기존 영문 더미 데이터를 삭제하고 친숙한 한글 상품명 데이터로 마이그레이션합니다...");
             reviewRepository.deleteAllInBatch();
             productInventoryRepository.deleteAllInBatch();
             productRepository.deleteAllInBatch();
             categoryRepository.deleteAllInBatch();
             seedDatabase();
-        }
     }
 
     private void seedDatabase() {
         // 1. 카테고리 더미 데이터 선적재 (이미지 매핑 호환성을 위해 영문 키값 유지)
-        String[] catNames = {"Electronics", "Clothing", "Books", "Home", "Sports"};
+        String[] catNames = {"Fashion", "Beauty", "Baby", "Food", "Kitchen", "Home", "Electronics", "Sports", "Pets"};
         List<Category> categoryList = new ArrayList<>();
         for (String catName : catNames) {
             Category category = new Category();
@@ -83,8 +73,8 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         // 3. 500개 상품 적재
-        String[] productPrefixes = {"스마트", "친환경", "프리미엄", "울트라", "클래식", "무선", "인체공학", "휴대용", "인기만점", "가성비"};
-        String[] productNouns = {"기기", "장비", "허브", "멀티팩", "키트", "웨어", "쿠션", "라이트", "에디션", "프로"};
+        String[] productPrefixes = {"신선한", "맛있는", "프리미엄", "국내산", "유기농", "가성비", "인기만점", "친환경", "특가", "명품"};
+        String[] productNouns = {"세트", "박스", "팩", "모음", "단품", "기획", "종합", "선물세트", "패키지", "대용량"};
         
         List<Product> products = new ArrayList<>();
         for (int i = 1; i <= 500; i++) {
@@ -93,11 +83,15 @@ public class DatabaseSeeder implements CommandLineRunner {
             // 카테고리명을 한국식 네이밍으로 한글 변환 매핑
             String categoryKorean = "";
             switch (category.getName()) {
-                case "Electronics": categoryKorean = "전자기기"; break;
-                case "Clothing": categoryKorean = "패션의류"; break;
-                case "Books": categoryKorean = "도서/음반"; break;
+                case "Fashion": categoryKorean = "패션의류/잡화"; break;
+                case "Beauty": categoryKorean = "뷰티/화장품"; break;
+                case "Baby": categoryKorean = "출산/유아동"; break;
+                case "Food": categoryKorean = "식품"; break;
+                case "Kitchen": categoryKorean = "주방/생필품"; break;
                 case "Home": categoryKorean = "홈인테리어"; break;
+                case "Electronics": categoryKorean = "가전/디지털"; break;
                 case "Sports": categoryKorean = "스포츠/레저"; break;
+                case "Pets": categoryKorean = "반려동물용품"; break;
                 default: categoryKorean = "일반상품";
             }
 
@@ -105,8 +99,8 @@ public class DatabaseSeeder implements CommandLineRunner {
                          categoryKorean + " " +
                          productNouns[random.nextInt(productNouns.length)] + " #" + i;
             
-            // 금액 단위는 원화 정수 형태로 환산 (10,000원 ~ 1,000,000원 사이 무작위 설정)
-            int price = (10 + random.nextInt(990)) * 1000;
+            // 금액 단위는 원화 정수 형태로 환산 (1,000원 ~ 50,000원 사이 무작위 설정)
+            int price = (1 + random.nextInt(50)) * 1000;
             
             Product product = new Product();
             product.setName(name);
