@@ -43,9 +43,13 @@ export const Footer: React.FC = () => {
           <h4 style={{ color: '#ffffff', marginBottom: '1.2rem', fontWeight: 700 }}>카테고리</h4>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.85rem' }}>
             <li><a href="#" style={{ color: '#94a3b8', textDecoration: 'none' }}>전체 상품 (All)</a></li>
-            <li><a href="#" style={{ color: '#94a3b8', textDecoration: 'none' }}>전자기기 (Electronics)</a></li>
-            <li><a href="#" style={{ color: '#94a3b8', textDecoration: 'none' }}>의류 (Clothing)</a></li>
-            <li><a href="#" style={{ color: '#94a3b8', textDecoration: 'none' }}>도서 (Books)</a></li>
+            <li><a href="#" style={{ color: '#94a3b8', textDecoration: 'none' }}>과일 (Fruit)</a></li>
+            <li><a href="#" style={{ color: '#94a3b8', textDecoration: 'none' }}>과자/간식 (Snack)</a></li>
+            <li><a href="#" style={{ color: '#94a3b8', textDecoration: 'none' }}>가전/디지털 (Electronics)</a></li>
+            <li><a href="#" style={{ color: '#94a3b8', textDecoration: 'none' }}>생필품 (Essentials)</a></li>
+            <li><a href="#" style={{ color: '#94a3b8', textDecoration: 'none' }}>정육/계란 (Meat)</a></li>
+            <li><a href="#" style={{ color: '#94a3b8', textDecoration: 'none' }}>채소 (Vegetables)</a></li>
+            <li><a href="#" style={{ color: '#94a3b8', textDecoration: 'none' }}>홈인테리어 (Home)</a></li>
           </ul>
         </div>
 

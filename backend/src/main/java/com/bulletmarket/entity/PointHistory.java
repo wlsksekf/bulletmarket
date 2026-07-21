@@ -8,39 +8,30 @@ import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "products")
+@Table(name = "point_history")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Product {
+public class PointHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "product_id")
+    @Column(name = "history_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(nullable = false)
-    private String name;
+    private Integer amount;
 
     @Column(nullable = false)
-    private Integer price;
+    private String type; // 'EARN', 'SPEND'
 
-    @Column(name = "is_available")
-    private Boolean isAvailable = true;
-
-    @Column(name = "view_count")
-    private Integer viewCount = 0;
+    @Column(nullable = false)
+    private String description;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column(name = "average_rating")
-    private Double averageRating = 0.00;
-
-    @Column(name = "review_count")
-    private Integer reviewCount = 0;
 }

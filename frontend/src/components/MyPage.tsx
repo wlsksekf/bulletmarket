@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Calendar, ShoppingBag, Receipt, Ticket, ChevronRight, RefreshCw, AlertCircle } from 'lucide-react';
+import { Calendar, ShoppingBag, Receipt, Ticket, ChevronRight, RefreshCw, AlertCircle, Coins, Eye, BarChart } from 'lucide-react';
 
 interface OrderItem {
   id: number;
@@ -29,6 +29,10 @@ interface MyPageProps {
 
 export const MyPage: React.FC<MyPageProps> = ({ userSession, apiBaseUrl, onBackToShopping }) => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [points, setPoints] = useState<any[]>([]);
+  const [recentlyViewed, setRecentlyViewed] = useState<any[]>([]);
+  const [adminStats, setAdminStats] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'orders' | 'points' | 'recent' | 'admin'>('orders');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,28 +40,40 @@ export const MyPage: React.FC<MyPageProps> = ({ userSession, apiBaseUrl, onBackT
   const couponList = [
     { code: 'BULLET10', name: '총알배송 전상품 10% 쿠폰', desc: '결제 총액에서 10% 비율 할인 제공', type: 'ratio' },
     { code: 'WELCOME20', name: '신규 회원 가입 웰컴 20% 쿠폰', desc: '신규 회원을 위한 20% 스페셜 특별 할인', type: 'ratio' },
-    { code: 'DISCOUNT5', name: '오픈 기념 5천원 즉시 할인 쿠폰', desc: '최종 결제 단계에서 ₩5,000 정액 차감', type: 'flat' }
+    { code: 'DISCOUNT5', name: '오픈 기념 5천원 즉시 할인 쿠폰', desc: '최종 결제 단계에서 5,000원 정액 차감', type: 'flat' }
   ];
 
-  const fetchOrderHistory = async () => {
+  const fetchData = async () => {
     if (!userSession) return;
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get(`${apiBaseUrl}/api/orders`, {
-        params: { email: userSession.email }
-      });
-      setOrders(res.data || []);
+      const headers = { 'X-User-Id': 2 }; // Mock user session id for api
+      
+      const [ordersRes, pointsRes, recentRes] = await Promise.all([
+        axios.get(`${apiBaseUrl}/api/orders`, { params: { email: userSession.email } }),
+        axios.get(`${apiBaseUrl}/api/points/history`, { headers }),
+        axios.get(`${apiBaseUrl}/api/recently-viewed`, { headers })
+      ]);
+      setOrders(ordersRes.data || []);
+      setPoints(pointsRes.data || []);
+      setRecentlyViewed(recentRes.data || []);
+
+      // Mock admin check (should be based on actual role)
+      axios.get(`${apiBaseUrl}/api/admin/stats`, { headers: { 'X-User-Id': 1 } }) // Admin ID
+        .then(res => setAdminStats(res.data))
+        .catch(() => setAdminStats(null)); // Ignore if not admin
+
     } catch (err: any) {
-      console.error('구매 내역 로드 실패', err);
-      setError('구매 내역을 불러오는 중 오류가 발생했습니다.');
+      console.error('데이터 로드 실패', err);
+      setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrderHistory();
+    fetchData();
   }, [userSession, apiBaseUrl]);
 
   if (!userSession) {
@@ -180,14 +196,45 @@ export const MyPage: React.FC<MyPageProps> = ({ userSession, apiBaseUrl, onBackT
           </div>
         </div>
 
-        {/* 3. 최근 구매 내역 */}
+        {/* 탭 메뉴 */}
+        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+          <button 
+            onClick={() => setActiveTab('orders')}
+            style={{ background: 'none', border: 'none', fontWeight: activeTab === 'orders' ? 'bold' : 'normal', color: activeTab === 'orders' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <ShoppingBag size={16} /> 주문 내역
+          </button>
+          <button 
+            onClick={() => setActiveTab('points')}
+            style={{ background: 'none', border: 'none', fontWeight: activeTab === 'points' ? 'bold' : 'normal', color: activeTab === 'points' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Coins size={16} /> 포인트 내역
+          </button>
+          <button 
+            onClick={() => setActiveTab('recent')}
+            style={{ background: 'none', border: 'none', fontWeight: activeTab === 'recent' ? 'bold' : 'normal', color: activeTab === 'recent' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Eye size={16} /> 최근 본 상품
+          </button>
+          {adminStats && (
+            <button 
+              onClick={() => setActiveTab('admin')}
+              style={{ background: 'none', border: 'none', fontWeight: activeTab === 'admin' ? 'bold' : 'normal', color: activeTab === 'admin' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <BarChart size={16} /> 관리자 대시보드
+            </button>
+          )}
+        </div>
+
+        {/* 콘텐츠 영역 */}
+        {activeTab === 'orders' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <ShoppingBag size={20} style={{ color: 'var(--primary)' }} />
               <h2 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>최근 주문/구매 내역</h2>
             </div>
-            <button onClick={fetchOrderHistory} style={{
+            <button onClick={fetchData} style={{
               background: 'none',
               border: 'none',
               color: 'var(--text-muted)',
@@ -295,12 +342,12 @@ export const MyPage: React.FC<MyPageProps> = ({ userSession, apiBaseUrl, onBackT
                                 {item.product.name}
                               </div>
                               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                단가 ₩{Math.round(item.price * 1000).toLocaleString()} | {item.quantity}개
+                                단가 {Math.round(item.price).toLocaleString()}원 | {item.quantity}개
                               </div>
                             </div>
                           </div>
                           <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                            ₩{Math.round(item.price * item.quantity * 1000).toLocaleString()}
+                            {Math.round(item.price * item.quantity).toLocaleString()}원
                           </span>
                         </div>
                       ))}
@@ -317,7 +364,7 @@ export const MyPage: React.FC<MyPageProps> = ({ userSession, apiBaseUrl, onBackT
                     }}>
                       <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>총 결제 금액 (쿠폰 적용가)</span>
                       <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--secondary)' }}>
-                        ₩{Math.round(order.totalPrice * 1000).toLocaleString()}
+                        {Math.round(order.totalPrice).toLocaleString()}원
                       </span>
                     </div>
                   </div>
@@ -326,6 +373,60 @@ export const MyPage: React.FC<MyPageProps> = ({ userSession, apiBaseUrl, onBackT
             </div>
           )}
         </div>
+        )}
+
+        {activeTab === 'points' && (
+          <div>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem' }}>포인트 내역</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {points.length === 0 ? <p>내역이 없습니다.</p> : points.map(p => (
+                <div key={p.id} style={{ background: 'var(--bg-card)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{new Date(p.createdAt).toLocaleDateString()}</span>
+                    <span style={{ fontWeight: 'bold', color: p.type === 'EARN' ? '#10b981' : '#ef4444' }}>
+                      {p.type === 'EARN' ? '+' : '-'}{p.amount} P
+                    </span>
+                  </div>
+                  <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.95rem' }}>{p.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'recent' && (
+          <div>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem' }}>최근 본 상품</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
+              {recentlyViewed.map(view => (
+                <div key={view.id} style={{ cursor: 'pointer', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem', background: 'var(--bg-card)' }}>
+                  <img src={view.product.imageUrl} alt={view.product.name} style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '4px' }} />
+                  <p style={{ fontSize: '12px', margin: '0.5rem 0 0 0', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{view.product.name}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'admin' && adminStats && (
+          <div>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem' }}>관리자 대시보드 (Admin Stats)</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+              <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--border)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>총 가입 유저</div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{adminStats.totalUsers}명</div>
+              </div>
+              <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--border)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>총 누적 주문</div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{adminStats.totalOrders}건</div>
+              </div>
+              <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--border)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>등록된 리뷰</div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{adminStats.totalReviews}개</div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

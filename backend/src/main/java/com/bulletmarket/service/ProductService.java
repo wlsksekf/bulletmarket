@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import java.util.Comparator;
+
 @Service
 public class ProductService {
 
@@ -27,14 +29,14 @@ public class ProductService {
     private ReviewRepository reviewRepository;
 
     @Transactional(readOnly = true)
-    public List<ProductDto> getAllProducts() {
+    public List<ProductDto> getAllProducts(String sort) {
         List<Product> products = productRepository.findAll();
         
         // 의도적인 성능 결함: N+1 쿼리 루프 문제
         // 조회된 상품 전체를 반복하며 개별 상품의 평점 정보(쿼리 1)와 리뷰 수(쿼리 2), 
         // 그리고 분리된 재고 테이블(product_inventories)의 재고값(쿼리 3)을 매번 던집니다.
         // 500개 상품 로드 시 데이터베이스 호출이 폭증하는 병목 상태를 고의 재현합니다.
-        return products.stream().map(product -> {
+        List<ProductDto> dtos = products.stream().map(product -> {
             List<Review> reviews = reviewRepository.findByProductId(product.getId()); // 쿼리 1
             int count = reviewRepository.countByProductId(product.getId());          // 쿼리 2
             
@@ -65,14 +67,16 @@ public class ProductService {
                     count
             );
         }).collect(Collectors.toList());
+        
+        return applySorting(dtos, sort);
     }
 
     @Transactional(readOnly = true)
-    public List<ProductDto> searchProducts(String keyword) {
+    public List<ProductDto> searchProducts(String keyword, String sort) {
         List<Product> products = productRepository.findByNameContainingIgnoreCase(keyword);
         
         // 의도적인 성능 결함: 검색 조회 시에도 동일하게 N+1 데이터베이스 쿼리를 루프로 때림
-        return products.stream().map(product -> {
+        List<ProductDto> dtos = products.stream().map(product -> {
             List<Review> reviews = reviewRepository.findByProductId(product.getId());
             int count = reviewRepository.countByProductId(product.getId());
             
@@ -100,6 +104,21 @@ public class ProductService {
                     count
             );
         }).collect(Collectors.toList());
+
+        return applySorting(dtos, sort);
+    }
+
+    private List<ProductDto> applySorting(List<ProductDto> dtos, String sort) {
+        if ("price_asc".equals(sort)) {
+            dtos.sort(Comparator.comparing(ProductDto::getPrice));
+        } else if ("price_desc".equals(sort)) {
+            dtos.sort(Comparator.comparing(ProductDto::getPrice).reversed());
+        } else if ("rating".equals(sort)) {
+            dtos.sort(Comparator.comparing(ProductDto::getAverageRating).reversed());
+        } else if ("reviews".equals(sort)) {
+            dtos.sort(Comparator.comparing(ProductDto::getReviewCount).reversed());
+        }
+        return dtos;
     }
 
     @Transactional(readOnly = true)

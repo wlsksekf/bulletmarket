@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { ArrowLeft, Star, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Star, ShoppingCart, ThumbsUp, Heart } from 'lucide-react';
 
 interface Product {
   id: number;
@@ -15,6 +15,8 @@ interface Review {
   id: number;
   rating: number;
   content: string;
+  imageUrl?: string;
+  helpfulCount?: number;
 }
 
 interface ProductDetailProps {
@@ -34,6 +36,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -44,6 +47,21 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
         
         setProduct(productRes.data);
         setReviews(reviewsRes.data);
+
+        // Record recently viewed
+        axios.post(`${apiBaseUrl}/api/recently-viewed/${productId}`, {}, {
+          headers: { 'X-User-Id': 2 } // Mock user
+        }).catch(console.error);
+
+        // Fetch wishlist status
+        axios.get(`${apiBaseUrl}/api/wishlists`, {
+          headers: { 'X-User-Id': 2 }
+        }).then(res => {
+          if (res.data.some((w: any) => w.product.id === productId)) {
+            setIsWishlisted(true);
+          }
+        }).catch(console.error);
+        
       } catch (err: any) {
         setError(err.message || 'Failed to load product details');
       } finally {
@@ -53,6 +71,30 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
 
     fetchProductData();
   }, [productId, apiBaseUrl]);
+
+  const toggleWishlist = async () => {
+    try {
+      const res = await axios.post(`${apiBaseUrl}/api/wishlists/${productId}`, {}, {
+        headers: { 'X-User-Id': 2 }
+      });
+      setIsWishlisted(res.data.added);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleHelpful = async (reviewId: number) => {
+    try {
+      const res = await axios.post(`${apiBaseUrl}/api/reviews/${reviewId}/like`, {}, {
+        headers: { 'X-User-Id': 2 }
+      });
+      setReviews(reviews.map(r => 
+        r.id === reviewId ? { ...r, helpfulCount: (r.helpfulCount || 0) + (res.data.liked ? 1 : -1) } : r
+      ));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   if (loading) {
     return (
@@ -86,12 +128,12 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
         </div>
 
         <div className="detail-info">
-          <h1 className="detail-title">{product.name}</h1>
+          <h1 className="detail-title">{product.name.replace(/\s*#\d+$/, '')}</h1>
 
           {/* 정가 대비 할인가 표시 (쿠팡 스타일) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
             <span style={{ fontSize: '14px', textDecoration: 'line-through', color: 'var(--text-muted)' }}>
-              {Math.round((product.price * 1000) / (1 - (((product.id % 4) * 10 + 10) / 100))).toLocaleString()}원
+              {Math.round((product.price) / (1 - (((product.id % 4) * 10 + 10) / 100))).toLocaleString()}원
             </span>
             <span style={{ fontSize: '14px', color: '#f43f5e', fontWeight: 'bold' }}>
               ({(product.id % 4) * 10 + 10}% 할인가)
@@ -100,7 +142,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
 
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '1rem' }}>
             <span className="detail-price" style={{ color: 'var(--secondary)', margin: 0 }}>
-              ₩{Math.round(product.price * 1000).toLocaleString()}
+              {Math.round(product.price).toLocaleString()}원
             </span>
             
             {/* 로켓배송 / 무료배송 뱃지 */}
@@ -141,17 +183,30 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
             )}
           </div>
 
-          <p style={{ marginBottom: '2rem', lineHeight: '1.6' }}>{product.description}</p>
 
-          <button 
-            className="btn-add-cart" 
-            id="detail-add-to-cart-btn"
-            onClick={() => onAddToCart(product)}
-            disabled={product.stock <= 0}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem' }}
-          >
-            <ShoppingCart size={18} /> 장바구니 담기
-          </button>
+
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <button 
+              className="btn-add-cart" 
+              id="detail-add-to-cart-btn"
+              onClick={() => onAddToCart(product)}
+              disabled={product.stock <= 0}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem' }}
+            >
+              <ShoppingCart size={18} /> 장바구니 담기
+            </button>
+            <button
+              onClick={() => toggleWishlist()}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem',
+                border: '1px solid var(--border)', borderRadius: '8px', background: 'white', cursor: 'pointer',
+                fontWeight: 'bold', color: 'var(--text-main)'
+              }}
+            >
+              <Heart size={18} fill={isWishlisted ? "#ef4444" : "none"} color={isWishlisted ? "#ef4444" : "#64748b"} />
+              찜하기
+            </button>
+          </div>
 
           <div className="reviews-section">
             <h2 style={{ fontSize: '1.25rem', borderBottom: '2px solid var(--border)', paddingBottom: '0.5rem' }}>
@@ -178,6 +233,21 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                   <p style={{ fontSize: '10px', color: '#8c98a5', margin: 0, lineBreak: 'anywhere' }}>
                     {review.content}
                   </p>
+                  {review.imageUrl && (
+                    <img src={review.imageUrl} alt="Review" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', marginTop: '0.5rem' }} />
+                  )}
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <button 
+                      onClick={() => handleHelpful(review.id)}
+                      style={{
+                        background: 'none', border: '1px solid var(--border)', borderRadius: '12px',
+                        padding: '2px 8px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                        color: 'var(--text-muted)'
+                      }}
+                    >
+                      <ThumbsUp size={10} /> 도움이 돼요 {review.helpfulCount || 0}
+                    </button>
+                  </div>
                 </div>
               ))
             )}

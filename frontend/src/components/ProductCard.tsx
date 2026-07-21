@@ -1,5 +1,6 @@
-import React from 'react';
-import { Star } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Star, Heart } from 'lucide-react';
+import axios from 'axios';
 
 interface ProductDto {
   id: number;
@@ -16,16 +17,50 @@ interface ProductCardProps {
   product: ProductDto;
   onAddToCart: (product: ProductDto, e: React.MouseEvent) => void;
   onSelect: (id: number) => void;
+  apiBaseUrl?: string;
+  userSession?: any;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onAddToCart,
   onSelect,
+  apiBaseUrl,
+  userSession,
 }) => {
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  useEffect(() => {
+    if (userSession && apiBaseUrl) {
+      axios.get(`${apiBaseUrl}/api/wishlists`, {
+        headers: { 'X-User-Id': 2 } // Mocking user 2 or use userSession logic
+      }).then(res => {
+        if (res.data.some((w: any) => w.product.id === product.id)) {
+          setIsWishlisted(true);
+        }
+      }).catch(console.error);
+    }
+  }, [userSession, apiBaseUrl, product.id]);
+
+  const toggleWishlist = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!userSession) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+    try {
+      const res = await axios.post(`${apiBaseUrl}/api/wishlists/${product.id}`, {}, {
+        headers: { 'X-User-Id': 2 }
+      });
+      setIsWishlisted(res.data.added);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   // 쿠팡 스타일 할인율 시뮬레이션 (10% ~ 40%)
   const discountPercent = (product.id % 4) * 10 + 10; 
-  const originalPrice = Math.round((product.price * 1000) / (1 - discountPercent / 100));
+  const originalPrice = Math.round((product.price) / (1 - discountPercent / 100));
 
   // 배송 조건 구분 (로켓배송 또는 무료배송 뱃지 부착용)
   const isRocket = product.id % 2 === 0;
@@ -51,17 +86,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             target.src = `https://picsum.photos/seed/${product.id}/400/400`;
           }}
         />
+        <button 
+          onClick={toggleWishlist}
+          style={{ 
+            position: 'absolute', top: '8px', right: '8px', background: 'white', border: 'none', 
+            borderRadius: '50%', padding: '6px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10
+          }}
+        >
+          <Heart size={16} fill={isWishlisted ? "#ef4444" : "none"} color={isWishlisted ? "#ef4444" : "#64748b"} />
+        </button>
       </div>
       
-      <div className="product-card-info" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        <h3 className="product-card-title" style={{ fontSize: '0.95rem', height: '2.4rem', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.2rem', marginBottom: '0.4rem' }}>
-          {product.name}
+      <div className="product-card-info" style={{ padding: '1rem', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        <h3 className="product-card-title" style={{ fontSize: '0.9rem', height: '2.4rem', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.2rem', marginBottom: '0.4rem' }}>
+          {product.name.replace(/\s*#\d+$/, '')}
         </h3>
-        
-        {/* 웹 접근성 결함: 설명 텍스트를 흰 배경에서 희미한 회색(#a3a3a3)으로 매핑하여 명도 대비AA 규정(4.5:1) 위반 */}
-        <p className="product-card-desc" style={{ fontSize: '11px', height: '1.4rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.5rem' }}>
-          {product.description}
-        </p>
         
         {/* 쿠팡 스타일 평점 및 별점 개수 */}
         <div className="product-card-rating" style={{ display: 'flex', alignItems: 'center', gap: '2px', marginBottom: '0.75rem', fontSize: '11px' }}>
@@ -84,10 +124,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </span>
         </div>
 
-        <div className="product-card-footer" style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div className="product-card-footer" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'stretch' }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span className="product-card-price" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--secondary)' }}>
-              ₩{Math.round(product.price * 1000).toLocaleString()}
+            <span className="product-card-price" style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--secondary)', wordBreak: 'break-all' }}>
+              {Math.round(product.price).toLocaleString()}원
             </span>
             
             {/* 🚀로켓배송 / 무료배송 뱃지 */}
@@ -121,10 +161,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           
           <button 
             className="btn-add-cart" 
-            style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '6px' }}
+            style={{ padding: '6px 10px', fontSize: '11px', borderRadius: '6px', whiteSpace: 'nowrap', width: '100%' }}
             onClick={(e) => onAddToCart(product, e)}
           >
-            장바구니
+            장바구니 담기
           </button>
         </div>
       </div>

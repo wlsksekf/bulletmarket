@@ -19,6 +19,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     private CategoryRepository categoryRepository;
 
     @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -38,16 +41,13 @@ public class DatabaseSeeder implements CommandLineRunner {
         boolean needsReSeed = true; // Force reseed to apply new categories and prices
 
             System.out.println("⚙️ 데이터베이스의 기존 영문 더미 데이터를 삭제하고 친숙한 한글 상품명 데이터로 마이그레이션합니다...");
-            reviewRepository.deleteAllInBatch();
-            productInventoryRepository.deleteAllInBatch();
-            productRepository.deleteAllInBatch();
-            categoryRepository.deleteAllInBatch();
+            jdbcTemplate.execute("TRUNCATE TABLE reviews, product_inventories, products, categories CASCADE");
             seedDatabase();
     }
 
     private void seedDatabase() {
         // 1. 카테고리 더미 데이터 선적재 (이미지 매핑 호환성을 위해 영문 키값 유지)
-        String[] catNames = {"Fashion", "Beauty", "Baby", "Food", "Kitchen", "Home", "Electronics", "Sports", "Pets"};
+        String[] catNames = {"Fruit", "Snack", "Electronics", "Essentials", "Meat", "Vegetables", "Home"};
         List<Category> categoryList = new ArrayList<>();
         for (String catName : catNames) {
             Category category = new Category();
@@ -73,8 +73,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         // 3. 500개 상품 적재
-        String[] productPrefixes = {"신선한", "맛있는", "프리미엄", "국내산", "유기농", "가성비", "인기만점", "친환경", "특가", "명품"};
-        String[] productNouns = {"세트", "박스", "팩", "모음", "단품", "기획", "종합", "선물세트", "패키지", "대용량"};
+        // 3. 500개 상품 적재
         
         List<Product> products = new ArrayList<>();
         for (int i = 1; i <= 500; i++) {
@@ -82,22 +81,54 @@ public class DatabaseSeeder implements CommandLineRunner {
             
             // 카테고리명을 한국식 네이밍으로 한글 변환 매핑
             String categoryKorean = "";
+            String[] prefixes = {};
+            String[] nouns = {};
+            
             switch (category.getName()) {
-                case "Fashion": categoryKorean = "패션의류/잡화"; break;
-                case "Beauty": categoryKorean = "뷰티/화장품"; break;
-                case "Baby": categoryKorean = "출산/유아동"; break;
-                case "Food": categoryKorean = "식품"; break;
-                case "Kitchen": categoryKorean = "주방/생필품"; break;
-                case "Home": categoryKorean = "홈인테리어"; break;
-                case "Electronics": categoryKorean = "가전/디지털"; break;
-                case "Sports": categoryKorean = "스포츠/레저"; break;
-                case "Pets": categoryKorean = "반려동물용품"; break;
-                default: categoryKorean = "일반상품";
+                case "Fruit": 
+                    categoryKorean = "과일"; 
+                    prefixes = new String[]{"신선한", "고당도", "산지직송", "친환경", "제철"};
+                    nouns = new String[]{"사과", "바나나", "포도", "세트", "박스"};
+                    break;
+                case "Snack": 
+                    categoryKorean = "과자/간식"; 
+                    prefixes = new String[]{"달콤한", "바삭한", "인기만점", "단짠단짠", "가성비"};
+                    nouns = new String[]{"모음", "패키지", "단품", "선물세트", "종합세트"};
+                    break;
+                case "Electronics": 
+                    categoryKorean = "가전/디지털"; 
+                    prefixes = new String[]{"최신형", "스마트", "가성비", "고성능", "인기"};
+                    nouns = new String[]{"기기", "단품", "풀세트", "패키지", "특가"};
+                    break;
+                case "Essentials": 
+                    categoryKorean = "생필품"; 
+                    prefixes = new String[]{"대용량", "실속형", "친환경", "가성비", "프리미엄"};
+                    nouns = new String[]{"세트", "팩", "묶음", "기획", "박스"};
+                    break;
+                case "Meat": 
+                    categoryKorean = "정육/계란"; 
+                    prefixes = new String[]{"1등급", "무항생제", "신선한", "프리미엄", "국내산"};
+                    nouns = new String[]{"세트", "팩", "모음", "구이용", "국거리"};
+                    break;
+                case "Vegetables": 
+                    categoryKorean = "채소"; 
+                    prefixes = new String[]{"유기농", "신선한", "산지직송", "무농약", "친환경"};
+                    nouns = new String[]{"모음", "박스", "세트", "샐러드용", "찌개용"};
+                    break;
+                case "Home": 
+                    categoryKorean = "홈인테리어"; 
+                    prefixes = new String[]{"감성", "모던", "북유럽풍", "아늑한", "프리미엄"};
+                    nouns = new String[]{"세트", "소품", "단품", "컬렉션", "가구"};
+                    break;
+                default: 
+                    categoryKorean = "일반상품";
+                    prefixes = new String[]{"가성비", "프리미엄", "인기", "특가"};
+                    nouns = new String[]{"세트", "단품", "기획"};
             }
 
-            String name = productPrefixes[random.nextInt(productPrefixes.length)] + " " +
+            String name = prefixes[random.nextInt(prefixes.length)] + " " +
                          categoryKorean + " " +
-                         productNouns[random.nextInt(productNouns.length)] + " #" + i;
+                         nouns[random.nextInt(nouns.length)];
             
             // 금액 단위는 원화 정수 형태로 환산 (1,000원 ~ 50,000원 사이 무작위 설정)
             int price = (1 + random.nextInt(50)) * 1000;

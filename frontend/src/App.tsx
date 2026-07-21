@@ -43,6 +43,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState<string>('latest');
   
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
@@ -94,9 +95,9 @@ function App() {
     const loadProducts = async () => {
       try {
         setLoading(true);
-        let url = `${API_BASE_URL}/api/products`;
+        let url = `${API_BASE_URL}/api/products?sort=${sortBy}`;
         if (searchQuery.trim()) {
-          url = `${API_BASE_URL}/api/products/search?q=${encodeURIComponent(searchQuery)}`;
+          url = `${API_BASE_URL}/api/products/search?q=${encodeURIComponent(searchQuery)}&sort=${sortBy}`;
         }
         const res = await axios.get(url);
         setProducts(res.data);
@@ -113,7 +114,7 @@ function App() {
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
+  }, [searchQuery, sortBy]);
 
   // 브라우저 최초 마운트 시 LocalStorage 세션 복원
   useEffect(() => {
@@ -276,11 +277,13 @@ function App() {
   // 한국 쇼핑몰 스타일 카테고리 매핑 (필터링 매커니즘 보존용)
   const categoriesMap = [
     { label: '전체 상품', value: 'All' },
-    { label: '전자기기', value: 'Electronics' },
-    { label: '의류', value: 'Clothing' },
-    { label: '도서', value: 'Books' },
-    { label: '홈·인테리어', value: 'Home' },
-    { label: '스포츠·레저', value: 'Sports' }
+    { label: '과일', value: 'Fruit' },
+    { label: '과자/간식', value: 'Snack' },
+    { label: '가전/디지털', value: 'Electronics' },
+    { label: '생필품', value: 'Essentials' },
+    { label: '정육/계란', value: 'Meat' },
+    { label: '채소', value: 'Vegetables' },
+    { label: '홈인테리어', value: 'Home' }
   ];
 
   // 클라이언트 사이드 미최적화 필터링 (가상 DOM 버추얼라이제이션 스킵)
@@ -387,6 +390,17 @@ function App() {
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                         등록 상품 총 {filteredProducts.length}개
                       </span>
+                      <select 
+                        value={sortBy} 
+                        onChange={(e) => setSortBy(e.target.value)}
+                        style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none' }}
+                      >
+                        <option value="latest">최신순</option>
+                        <option value="price_asc">낮은 가격순</option>
+                        <option value="price_desc">높은 가격순</option>
+                        <option value="rating">평점 높은순</option>
+                        <option value="reviews">리뷰 많은순</option>
+                      </select>
                     </div>
 
                     {/* 의도적인 렌더링 성능 지뢰밭: 무한 스크롤 다운 시 뷰포트 바깥의 모든 요소를 가상화 없이
@@ -398,6 +412,8 @@ function App() {
                           product={product}
                           onAddToCart={handleAddToCart}
                           onSelect={(id: number) => setSelectedProductId(id)}
+                          apiBaseUrl={API_BASE_URL}
+                          userSession={userSession}
                         />
                       ))}
                     </div>

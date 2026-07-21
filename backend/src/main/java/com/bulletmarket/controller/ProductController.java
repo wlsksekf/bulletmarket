@@ -23,9 +23,9 @@ public class ProductController {
     private ReviewRepository reviewRepository;
 
     @GetMapping
-    public ResponseEntity<List<ProductDto>> getAllProducts() {
+    public ResponseEntity<List<ProductDto>> getAllProducts(@RequestParam(value = "sort", defaultValue = "latest") String sort) {
         try {
-            List<ProductDto> products = productService.getAllProducts();
+            List<ProductDto> products = productService.getAllProducts(sort);
             return ResponseEntity.ok(products);
         } catch (Exception e) {
             // 배포 환경에서 서비스 레이어 에러 시 404가 나거나 로깅 누락되는 것 방지
@@ -34,8 +34,8 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ProductDto>> searchProducts(@RequestParam("q") String query) {
-        return ResponseEntity.ok(productService.searchProducts(query));
+    public ResponseEntity<List<ProductDto>> searchProducts(@RequestParam("q") String query, @RequestParam(value = "sort", defaultValue = "latest") String sort) {
+        return ResponseEntity.ok(productService.searchProducts(query, sort));
     }
 
     @GetMapping("/{id}")

@@ -36,4 +36,10 @@ public class User {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "points")
+    private Integer points = 0;
+
+    @Column(name = "role")
+    private String role = "USER";
 }
